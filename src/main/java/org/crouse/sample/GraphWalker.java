@@ -1,6 +1,7 @@
 package org.crouse.sample;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 
 /**
@@ -41,9 +42,7 @@ public enum GraphWalker {
 
       // Recursively walk the graph for each child node
       // TODO Investigate performance, and consider using parallelism 
-      for (GNode child : node.getChildren()) {
-         graph.addAll(walkGraph(child));
-      }
+      Arrays.stream(node.getChildren()).forEach(child -> graph.addAll(walkGraph(child)));
 
       // Convert to an ArrayList with a defensive copy
       return new ArrayList<GNode>(graph);
@@ -60,14 +59,7 @@ public enum GraphWalker {
       // Leaf node - return a new ArrayList of an ArrayList, containing the leaf node
       if (node.getChildren().length < 1) {
          // Singleton list containing just the node
-         ArrayList<GNode> singleton = new ArrayList<>();
-         singleton.add(node);
-         
-         // Wrap single path in a list of paths
-         ArrayList<ArrayList<GNode>> result = new ArrayList<>();
-         result.add(singleton);
-         
-         return result;
+         return getSingleton(node);
       }
 
       // Insert node into every child path, and collect them in a single list
@@ -80,6 +72,24 @@ public enum GraphWalker {
       }
       
       return paths;
+   }
+   
+   /**
+    * Get singleton of {@link GNode}, wrapped in an {@link ArrayList}
+    * 
+    * @param node singleton
+    * 
+    * @return singleton wrapped in an {@link ArrayList}
+    */
+   private ArrayList<ArrayList<GNode>> getSingleton(final GNode node) {
+      ArrayList<GNode> singleton = new ArrayList<>();
+      singleton.add(node);
+      
+      // Wrap single path in a list of paths
+      ArrayList<ArrayList<GNode>> result = new ArrayList<>();
+      result.add(singleton);
+      
+      return result;
    }
    
 }

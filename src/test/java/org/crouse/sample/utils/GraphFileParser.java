@@ -1,12 +1,13 @@
 package org.crouse.sample.utils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GraphFileParser {
 
@@ -25,16 +26,13 @@ public class GraphFileParser {
       Path path = new File(filePath).toPath();
 
       // Store the file as a list of strings
-      List<String> contents = new ArrayList<>();
-
+      List<String> contents = null;
+      
       // Try-with-resources automatically closes the file reader
-      try (BufferedReader reader = Files.newBufferedReader(path)) {
-         String line = null;
-         while ((line = reader.readLine()) != null) {
-            contents.add(line);
-         }
+      try (Stream<String> lines = Files.lines(path)) {
+         contents = lines.collect(Collectors.toList());
       }
 
-      return contents;
+      return (contents != null) ? contents : Collections.emptyList();
    }
 }

@@ -2,7 +2,11 @@ package org.crouse.sample;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.StringJoiner;
+
+import org.crouse.sample.GNodeImpl.GNodeBuilder;
+import org.crouse.sample.exception.GNodeException;
 
 /**
  * Immutable implementation of the {@link GNode} interface. If the name is {@code null},
@@ -13,23 +17,22 @@ import java.util.StringJoiner;
  *
  */
 public class GNodeImpl implements GNode {
-   private final String name_;
-   private final GNode[] children_;
+   private final String name;
+   private final GNode[] children;
 
    private GNodeImpl(final String name, final GNode[] children) {
-      this.name_ = name;
-      this.children_ = Arrays.copyOf(children, children.length); // Defensive copy
+      this.name = name;
+      this.children = Arrays.copyOf(children, children.length); // Defensive copy
    }
 
    @Override
    public String getName() {
-      return this.name_;
+      return this.name;
    }
 
    @Override
    public GNode[] getChildren() {
-      return Arrays.copyOf(this.children_, this.children_.length); // Defensive
-                                                                   // copy
+      return Arrays.copyOf(this.children, this.children.length); // Defensive copy
    }
    
    /*
@@ -46,8 +49,8 @@ public class GNodeImpl implements GNode {
       
       final int prime = 31;
       int result = 1;
-      result = prime * result + Arrays.hashCode(this.children_);
-      result = prime * result + ((this.name_ == null) ? 0 : this.name_.hashCode());
+      result = prime * result + Arrays.hashCode(this.children);
+      result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
       return result;
    }
 
@@ -73,14 +76,14 @@ public class GNodeImpl implements GNode {
          return false;
       }
       GNodeImpl other = (GNodeImpl) obj;
-      if (!Arrays.equals(this.children_, other.children_)) {
+      if (!Arrays.equals(this.children, other.children)) {
          return false;
       }
-      if (this.name_ == null) {
-         if (other.name_ != null) {
+      if (this.name == null) {
+         if (other.name != null) {
             return false;
          }
-      } else if (!this.name_.equals(other.name_)) {
+      } else if (!this.name.equals(other.name)) {
          return false;
       }
       return true;
@@ -91,10 +94,10 @@ public class GNodeImpl implements GNode {
       // If the VM argument namesOnly is true (i.e. -DnamesOnly=true), then 
       // only print the name of the node, and not the children.
       if (Boolean.getBoolean("namesOnly")) {
-         return this.name_;
+         return this.name;
       }
       
-      String pre = this.name_ + " [";
+      String pre = this.name + " [";
       String post = "]";
 
       // Use a StringJoiner to combine the toString output of the children
@@ -115,47 +118,48 @@ public class GNodeImpl implements GNode {
     * @author Sean Crouse
     *
     */
-   public static class NodeBuilder {
-      private String builderName_ = "";
-      private ArrayList<GNode> builderChildren_ = new ArrayList<>();
+   public static class GNodeBuilder {
+      private String name = "";
+      private ArrayList<GNode> children = new ArrayList<>();
       
-      public NodeBuilder setName(final String name) {
-         this.builderName_ = name;
+      public GNodeBuilder (final String name) {
+         this.name = name;
+      }
+      
+      public GNodeBuilder addChild(final GNode child) {
+         this.children.add(child);
          return this;
       }
       
-      public NodeBuilder addChild(final GNode child) {
-         this.builderChildren_.add(child);
-         return this;
-      }
-      
-      public GNodeImpl build() {
+      public GNodeImpl build() throws GNodeException {
          validate();
 
          // Convert children list to array
-         GNode[] childrenArray = new GNodeImpl[this.builderChildren_.size()];
-         childrenArray = this.builderChildren_.toArray(childrenArray);
+         GNode[] childrenArray = new GNodeImpl[this.children.size()];
+         childrenArray = this.children.toArray(childrenArray);
 
          // Return new node
-         return new GNodeImpl(this.builderName_, childrenArray);
+         return new GNodeImpl(this.name, childrenArray);
       }
       
       /**
        * Validate fields for building node
+       * @throws GNodeException name is null or empty
        */
-      private void validate() {
+      private void validate() throws GNodeException {
          // TODO - If 3rd-party libraries can be added, the Apache Commons-Lang
          // StringUtils.isNotBlank() can be used instead.  It has the advantage
          // of checking for null, 0-length, and all whitespace Strings in a 
          // single method call.
 
          // Validate node name is not null
-         if (this.builderName_ == null) {
-            throw new IllegalStateException("Node name cannot be null");
+         if (this.name == null) {
+            throw new GNodeException("name cannot be null");
          }
+         
          // Validate node name is not all whitespace, or a 0-length String
-         if (this.builderName_.trim().length() < 1) {
-            throw new IllegalStateException("Node name cannot be an empty String");
+         if (this.name.trim().isEmpty()) {
+            throw new GNodeException("name cannot be an empty String");
          }
 
       }

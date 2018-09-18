@@ -7,29 +7,29 @@ must be a file path.  To test part 2, run the main method TestPaths.  In both
 cases, the file should represent a tree of nodes.  Each level of the tree is 
 defined by the number of leading tab characters.  For example:
 
-Animal
-   |-- Dog
-   |    |-- Chihuahua
-   |    |-- Poodle
-   |
-   |-- Cat
-        |-- Lion
-        |-- House
-              |-- Tabby
-              |-- Siamese
+    Animal
+       |-- Dog
+       |    |-- Chihuahua
+       |    |-- Poodle
+       |
+       |-- Cat
+            |-- Lion
+            |-- House
+                  |-- Tabby
+                  |-- Siamese
               
 In the txt file, it would be represented as:
 
-Animal
-	Dog
-		Chihuahua
-		Poodle
-	Cat
-		Lion
-		House
-			Tabby
-			Siamese
-			
+    Animal
+        Dog
+            Chihuahua
+            Poodle
+        Cat
+            Lion
+            House
+                Tabby
+                Siamese
+
 When printing the nodes, the toString method prints the name and children of 
 each node.  To print just the name of the nodes, and not the children, use the 
 VM argument -DnamesOnly=true.

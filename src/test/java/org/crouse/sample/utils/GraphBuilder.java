@@ -1,10 +1,12 @@
 package org.crouse.sample.utils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Stack;
 
 import org.crouse.sample.GNode;
-import org.crouse.sample.GNodeImpl.NodeBuilder;
+import org.crouse.sample.GNodeImpl.GNodeBuilder;
+import org.crouse.sample.exception.GNodeException;
 
 public final class GraphBuilder {
 
@@ -22,7 +24,7 @@ public final class GraphBuilder {
     * @return Root node
     */
    public static GNode buildGraph(final List<String> contents) {
-      Stack<NodeBuilder> nodeBuilderStack = new Stack<>();
+      Stack<GNodeBuilder> nodeBuilderStack = new Stack<>();
 
       int level = -1; // Start at -1 to ensure that 0 indents results in the root being pushed to the stack
       GNode currentNode = null;
@@ -41,29 +43,27 @@ public final class GraphBuilder {
          if (indents > level) {
             level = indents;
          }
-         // Same level - previous line is a leaf node - build GNode for previous
-         // line
+         // Same level - previous line is a leaf node - build GNode for previous line
          else if (indents == level) {
-            currentNode = buildNode(nodeBuilderStack);
+            currentNode = buildNode(nodeBuilderStack).orElse(currentNode);
          }
-         // Go up one or more levels - build GNode for each level that it goes
-         // up
+         // Go up one or more levels - build GNode for each level that it goes up
          else {
             while (level - indents > -1) {
-               currentNode = buildNode(nodeBuilderStack);
+               currentNode = buildNode(nodeBuilderStack).orElse(currentNode);
                level--;
             }
          }
 
          // Always push the current line onto the stack
-         NodeBuilder builder = new NodeBuilder().setName(nodeStr.substring(indents));
+         GNodeBuilder builder = new GNodeBuilder(nodeStr.substring(indents));
          nodeBuilderStack.push(builder);
       }
 
       // Finished processing all lines.  Need to build all the remaining nodes 
       // in the stack
       while (!nodeBuilderStack.empty()) {
-         currentNode = buildNode(nodeBuilderStack);
+         currentNode = buildNode(nodeBuilderStack).orElse(currentNode);
       }
 
       return currentNode; // Root node
@@ -77,34 +77,33 @@ public final class GraphBuilder {
     * @return  Number of indentations, i.e. nesting level
     */
    private static int countIndents(final String node) {
-      int count = 0;
-      String trimmed = node;
-      
-      // Cannot use replaceAll, and take a diff of the String lengths.
-      // The replaceAll method will remove all tab characters, and not just 
-      // the leading ones.
-      while (trimmed.charAt(0) == '\t') {
-         count++;
-         trimmed = trimmed.replaceFirst("\t", "");
+      int i = 0;
+      while ((i < node.length()) && (node.charAt(i) == '\t')) {
+         i++;
       }
-      return count;
+      return i;
    }
 
    /**
     * Build the {@link GNode} and add it to the parent node's list of children
     * 
-    * @param nodeBuilderStack {@link Stack} of {@link NodeBuilder} objects, 
+    * @param nodeBuilderStack {@link Stack} of {@link GNodeBuilder} objects, 
     *                         which hold the node data until all children have 
     *                         been built.
     * 
     * @return  New node
     */
-   private static GNode buildNode(final Stack<NodeBuilder> nodeBuilderStack) {
-      final GNode gnode = nodeBuilderStack.pop().build();
+   private static Optional<GNode> buildNode(final Stack<GNodeBuilder> nodeBuilderStack) {
+      Optional<GNode> gnode = Optional.empty();
+      try {
+         gnode = Optional.of(nodeBuilderStack.pop().build());
+      } catch (GNodeException ex) {
+         ex.printStackTrace();
+      }
 
       // Add node to children list of parent node
-      if (!nodeBuilderStack.empty()) {
-         nodeBuilderStack.peek().addChild(gnode);
+      if (!nodeBuilderStack.empty() && gnode.isPresent()) {
+         nodeBuilderStack.peek().addChild(gnode.get());
       }
 
       return gnode;
